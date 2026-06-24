@@ -10,7 +10,7 @@
 	<meta name="apple-mobile-web-app-capable" content="yes">
 	<meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-        <style>
+<style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
@@ -150,6 +150,7 @@
         .field input {
             width: 100%;
             min-width: 0;
+            max-width: 100%;
             padding: 13px 16px;
             border: 1.5px solid var(--border);
             border-radius: var(--radius-sm);
@@ -160,6 +161,11 @@
             background: var(--surface-alt);
             transition: border-color 0.2s, box-shadow 0.2s;
             color: var(--text);
+        }
+
+        .field input[type="date"] {
+            -webkit-appearance: none;
+            appearance: none;
         }
 
         .field input:focus {
@@ -555,6 +561,7 @@
 
             .field label { font-size: 0.65rem; margin-bottom: 5px; }
             .field input { padding: 11px 14px; font-size: 0.9rem; }
+            .field input[type="date"] { font-size: 0.85rem; padding: 10px 12px; }
 
             .summary-row {
                 grid-template-columns: repeat(3, 1fr);
@@ -601,6 +608,7 @@
             .settings-panel.open { max-height: 350px; }
             .settings-inner { padding: 14px; }
             .field input { padding: 10px 12px; font-size: 0.85rem; }
+            .field input[type="date"] { font-size: 0.8rem; padding: 9px 10px; }
         }
     </style>
 </head>
