@@ -1,0 +1,19 @@
+{
+  "name": "EzBudge",
+  "short_name": "Bee",
+  "description": "My personal web app",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "orientation": "portrait",
+
+  "icons": [
+    {
+      "src": "bee_iphone.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
