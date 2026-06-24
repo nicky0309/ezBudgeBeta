@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>EZ Budget</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0d0d12;
+            --surface: #13131a;
+            --surface-alt: #1a1a24;
+            --border: #1e1e2a;
+            --text: #ededef;
+            --text-sub: #6b6b80;
+            --accent: #00f0ff;
+            --accent-soft: rgba(0,240,255,0.06);
+            --accent-glow: rgba(0,240,255,0.15);
+            --danger: #ff3b5c;
+            --danger-soft: rgba(255,59,92,0.1);
+            --green: #00f5a0;
+            --amber: #f5a623;
+            --radius: 24px;
+            --radius-sm: 16px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .app { max-width: 480px; margin: 0 auto; padding: 0 20px; position: relative; min-height: 100vh; display: flex; flex-direction: column; }
+
+        /* ── Top Bar ── */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 52px 0 0;
+            margin-bottom: 8px;
+        }
+        .top-left { display: flex; align-items: center; gap: 14px; }
+        .logo { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.5px; background: linear-gradient(135deg, #00f0ff, #7b61ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .cal-icon-btn {
+            width: 44px; height: 44px; border-radius: 14px; border: 1.5px solid var(--border); background: var(--surface);
+            cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+            color: var(--text-sub); font-size: 1.3rem;
+        }
+        .cal-icon-btn:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
+
+        .hamburger {
+            width: 44px; height: 44px; border-radius: 14px; border: none; background: var(--surface); border: 1.5px solid var(--border);
+            cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+            transition: all 0.2s;
+        }
+        .hamburger:hover { border-color: var(--accent); }
+        .hamburger span { display: block; width: 18px; height: 2px; background: var(--text); border-radius: 2px; transition: all 0.3s; }
+        .hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(5px,5px); }
+        .hamburger.open span:nth-child(2) { opacity: 0; }
+        .hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(5px,-5px); }
+
+        /* ── Hero Section ── */
+        .hero {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px 0;
+        }
+
+        .ring-wrap {
+            position: relative;
+            width: 240px;
+            height: 240px;
+            margin-bottom: 40px;
+        }
+
+        .ring-wrap svg { transform: rotate(-90deg); }
+        .ring-bg { fill: none; stroke: var(--border); stroke-width: 8; }
+        .ring-fg { fill: none; stroke: url(#rg); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 0.6s cubic-bezier(0.4,0,0.2,1); }
+
+        .ring-center {
+            position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .ring-label { font-size: 0.75rem; font-weight: 600; color: var(--text-sub); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 4px; }
+        .ring-amount { font-size: 2.8rem; font-weight: 900; letter-spacing: -1.5px; background: linear-gradient(135deg, #ff6b6b, #ffa36b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .ring-pct { font-size: 1rem; font-weight: 700; color: var(--green); margin-top: 2px; }
+        .ring-pct.over { color: var(--danger); }
+
+        /* ── Bottom Stats ── */
+        .bottom-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 0 0 40px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 20px;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-2px); }
+
+        .stat-label { font-size: 0.65rem; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+        .stat-val { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.3px; }
+
+        /* ── Settings Panel ── */
+        .settings-panel {
+            max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.3s, margin 0.3s;
+            opacity: 0; margin-bottom: 0;
+        }
+        .settings-panel.open { max-height: 260px; opacity: 1; margin-bottom: 24px; }
+
+        .settings-inner {
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 24px; overflow: hidden;
+        }
+        .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .settings-grid .field:last-child { grid-column: 1 / -1; }
+
+        .field label { display: block; font-size: 0.65rem; font-weight: 700; color: var(--text-sub); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+        .field input {
+            width: 100%; min-width: 0; max-width: 100%; padding: 12px 14px;
+            border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 0.9rem;
+            font-family: inherit; font-weight: 600; outline: none; background: var(--surface-alt);
+            transition: all 0.2s; color: var(--text);
+        }
+        .field input[type="date"] { -webkit-appearance: none; appearance: none; width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; }
+        .field input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); background: var(--surface); }
+
+        /* ── Calendar Modal ── */
+        .cal-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            z-index: 200; justify-content: center; align-items: center; padding: 16px;
+        }
+        .cal-overlay.open { display: flex; }
+
+        .cal-popup {
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+            width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.4); animation: popUp 0.3s cubic-bezier(0.16,1,0.3,1);
+        }
+        @keyframes popUp { from { opacity:0; transform:scale(0.95) translateY(16px); } to { opacity:1; transform:scale(1) translateY(0); } }
+
+        .cal-popup-head {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px 24px; border-bottom: 1px solid var(--border);
+        }
+        .cal-popup-title { font-size: 1rem; font-weight: 800; }
+        .cal-popup-close {
+            width: 36px; height: 36px; border-radius: 10px; border: none; background: var(--surface-alt);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            color: var(--text-sub); font-size: 1.1rem; transition: all 0.15s;
+        }
+        .cal-popup-close:hover { background: var(--danger-soft); color: var(--danger); }
+
+        .cal-nav-wrap {
+            display: flex; justify-content: space-between; align-items: center; padding: 16px 24px;
+        }
+        .cal-nav-wrap .month-label { font-size: 0.95rem; font-weight: 700; }
+        .cal-nav-wrap .nav-btns { display: flex; gap: 4px; }
+        .cal-nav-wrap .nav-btns button {
+            width: 34px; height: 34px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface);
+            cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 700;
+            color: var(--text); transition: all 0.15s; font-size: 0.9rem;
+        }
+        .cal-nav-wrap .nav-btns button:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+        .cal-nav-wrap .nav-btns .go-today { width: auto; padding: 0 14px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px; }
+
+        .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); padding: 0 8px 16px; }
+        .cal-day-label { padding: 10px 0; text-align: center; font-size: 0.6rem; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1.5px; }
+        .cal-cell {
+            min-height: 72px; padding: 6px; cursor: pointer; transition: background 0.15s;
+            border-radius: 8px; margin: 1px;
+        }
+        .cal-cell:hover { background: var(--accent-soft); }
+        .cal-cell.other .day-num { color: #3a3a4a; }
+        .cal-cell.today { background: var(--accent-soft); }
+        .cal-cell.selected { box-shadow: inset 0 0 0 2px var(--accent); }
+
+        .cal-cell .day-num { font-size: 0.82rem; font-weight: 700; margin-bottom: 2px; }
+        .cal-cell .day-total { font-size: 0.6rem; font-weight: 700; color: var(--amber); }
+        .cal-cell .day-chips { display: flex; flex-direction: column; gap: 2px; margin-top: 2px; }
+        .cal-cell .day-chip {
+            font-size: 0.55rem; padding: 2px 5px; border-radius: 5px; background: var(--accent-soft);
+            color: var(--accent); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            z-index: 300; justify-content: center; align-items: center; padding: 16px;
+        }
+        .modal-overlay.open { display: flex; }
+
+        .modal {
+            background: var(--surface); border-radius: 28px; padding: 32px; width: 440px; max-width: 100%;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.4); border: 1px solid var(--border);
+            animation: popUp 0.3s cubic-bezier(0.16,1,0.3,1);
+        }
+        .modal h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 24px; }
+        .modal-field { margin-bottom: 16px; }
+        .modal-field label { display: block; font-size: 0.65rem; font-weight: 700; color: var(--text-sub); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+        .modal-field input { width: 100%; padding: 13px 16px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 0.9rem; font-family: inherit; font-weight: 600; outline: none; background: var(--surface-alt); transition: all 0.2s; color: var(--text); }
+        .modal-field input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+
+        .day-detail { margin-top: 16px; max-height: 200px; overflow-y: auto; }
+        .day-detail-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: var(--surface-alt); border-radius: 10px; margin-bottom: 4px; }
+        .day-detail-item .name { font-size: 0.85rem; font-weight: 600; }
+        .day-detail-item .right { display: flex; align-items: center; gap: 10px; }
+        .day-detail-item .amount { font-size: 0.85rem; font-weight: 700; color: var(--amber); }
+        .day-detail-item .del-btn { width: 26px; height: 26px; border-radius: 8px; border: none; background: transparent; color: #555; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+        .day-detail-item .del-btn:hover { background: var(--danger-soft); color: var(--danger); }
+
+        .modal-actions { display: flex; gap: 12px; margin-top: 24px; }
+        .btn { flex: 1; padding: 13px; border-radius: var(--radius-sm); border: none; font-size: 0.88rem; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+        .btn-fill { background: linear-gradient(135deg, var(--accent), #7b61ff); color: #0d0d12; }
+        .btn-fill:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-ghost { background: var(--surface-alt); color: var(--text); border: 1.5px solid var(--border); }
+        .btn-ghost:hover { background: var(--border); }
+
+        .empty-msg { text-align: center; color: var(--text-sub); font-size: 0.85rem; padding: 16px 0; font-weight: 500; }
+
+        /* ── Mobile ── */
+        @media (max-width: 480px) {
+            .app { padding: 0 16px; }
+            .top-bar { padding-top: 44px; }
+            .ring-wrap { width: 200px; height: 200px; }
+            .ring-amount { font-size: 2.2rem; }
+            .stat-val { font-size: 1.1rem; }
+
+            .settings-panel.open { max-height: 340px; }
+            .settings-inner { padding: 18px; }
+            .settings-grid { grid-template-columns: 1fr; gap: 12px; }
+            .settings-grid .field:last-child { grid-column: 1; }
+            .field input { font-size: 0.85rem; padding: 11px 12px; }
+            .field input[type="date"] { font-size: 0.82rem; padding: 10px 10px; min-width: 0; width: 100%; box-sizing: border-box; }
+        }
+
+        @media (max-width: 380px) {
+            .ring-wrap { width: 170px; height: 170px; }
+            .ring-amount { font-size: 1.8rem; }
+            .ring-pct { font-size: 0.85rem; }
+            .stat-val { font-size: 1rem; }
+            .stat-card { padding: 16px; }
+            .settings-panel.open { max-height: 370px; }
+            .settings-inner { padding: 14px; }
+            .field input[type="date"] { font-size: 0.78rem; padding: 9px 8px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="top-bar">
+            <div class="top-left">
+                <div class="logo">
+					<a href="./index.html" style=" text-decoration: none">EZ Budget</a>
+				</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+                <button class="cal-icon-btn" id="calIconBtn" onclick="openCalendarPopup()" aria-label="달력">📅</button>
+                <button class="hamburger" id="hamburgerBtn" onclick="toggleSettings()">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+        </div>
+
+        <div class="settings-panel" id="settingsPanel">
+            <div class="settings-inner">
+                <div class="settings-grid">
+                    <div class="field">
+                        <label>시작일</label>
+                        <input type="date" id="startDate">
+                    </div>
+                    <div class="field">
+                        <label>종료일</label>
+                        <input type="date" id="endDate">
+                    </div>
+                    <div class="field">
+                        <label>예산 (원)</label>
+                        <input type="text" id="budget" inputmode="numeric" placeholder="500,000">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hero">
+            <div class="ring-wrap">
+                <svg width="100%" height="100%" viewBox="0 0 240 240">
+                    <defs><linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00f0ff"/><stop offset="100%" stop-color="#00f5a0"/></linearGradient></defs>
+                    <circle class="ring-bg" cx="120" cy="120" r="100"/>
+                    <circle class="ring-fg" id="ringFg" cx="120" cy="120" r="100" stroke-dasharray="628.32" stroke-dashoffset="628.32"/>
+                </svg>
+                <div class="ring-center">
+                    <div class="ring-label">잔여</div>
+                    <div class="ring-amount" id="heroRemaining">₩0</div>
+                    <div class="ring-pct" id="heroPct">0%</div>
+                </div>
+            </div>
+
+            <div class="bottom-stats">
+                <div class="stat-card">
+                    <div class="stat-label">예산</div>
+                    <div class="stat-val" id="heroBudget" style="color:var(--accent)">₩0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">사용</div>
+                    <div class="stat-val" id="heroSpent" style="color:var(--amber)">₩0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar Popup -->
+    <div class="cal-overlay" id="calOverlay" onclick="closeCalendarPopup(event)">
+        <div class="cal-popup" onclick="event.stopPropagation()">
+            <div class="cal-popup-head">
+                <div class="cal-popup-title">달력</div>
+                <button class="cal-popup-close" onclick="closeCalendarPopup()">✕</button>
+            </div>
+            <div class="cal-nav-wrap">
+                <div class="month-label" id="calMonthLabel"></div>
+                <div class="nav-btns">
+                    <button class="go-today" onclick="goTodayCal()">오늘</button>
+                    <button onclick="changeMonthCal(-1)">‹</button>
+                    <button onclick="changeMonthCal(1)">›</button>
+                </div>
+            </div>
+            <div class="cal-grid" id="calGrid"></div>
+        </div>
+    </div>
+
+    <!-- Expense Modal -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <h3 id="modalTitle">지출 추가</h3>
+            <div class="modal-field">
+                <label>내용</label>
+                <input type="text" id="expenseName" placeholder="점심, 교통비...">
+            </div>
+            <div class="modal-field">
+                <label>금액 (원)</label>
+                <input type="number" id="expenseAmount" placeholder="0">
+            </div>
+            <div class="day-detail" id="dayDetail"></div>
+            <div class="modal-actions">
+                <button class="btn btn-ghost" onclick="closeModal()">닫기</button>
+                <button class="btn btn-fill" onclick="addExpense()">등록</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let expenses = JSON.parse(localStorage.getItem('ezb_expenses') || '[]');
+        let budget = parseFloat(localStorage.getItem('ezb_budget') || '0');
+        let startDate = localStorage.getItem('ezb_start') || '';
+        let endDate = localStorage.getItem('ezb_end') || '';
+        let calYear, calMonth;
+        let selectedDate = null;
+
+        const today = new Date();
+        calYear = today.getFullYear();
+        calMonth = today.getMonth();
+
+        document.getElementById('startDate').value = startDate;
+        document.getElementById('endDate').value = endDate;
+        document.getElementById('budget').value = budget ? budget.toLocaleString('ko-KR') : '';
+
+        ['budget','startDate','endDate'].forEach(id => {
+            document.getElementById(id).addEventListener('input', function() {
+                if (id === 'budget') {
+                    let raw = this.value.replace(/[^0-9]/g, '');
+                    budget = parseInt(raw) || 0;
+                    let pos = this.selectionStart, len = this.value.length;
+                    this.value = budget ? budget.toLocaleString('ko-KR') : '';
+                    this.setSelectionRange(pos + (this.value.length - len), pos + (this.value.length - len));
+                }
+                if (id === 'startDate') startDate = this.value;
+                if (id === 'endDate') endDate = this.value;
+                localStorage.setItem('ezb_budget', budget);
+                localStorage.setItem('ezb_start', startDate);
+                localStorage.setItem('ezb_end', endDate);
+                updateAll();
+            });
+        });
+
+        function fmt(n) { return '₩' + n.toLocaleString('ko-KR'); }
+        function toggleSettings() {
+            document.getElementById('settingsPanel').classList.toggle('open');
+            document.getElementById('hamburgerBtn').classList.toggle('open');
+        }
+
+        // ── Calendar Popup ──
+        function openCalendarPopup() {
+            document.getElementById('calOverlay').classList.add('open');
+            renderCalPopup();
+        }
+        function closeCalendarPopup(e) {
+            if (e && e.target !== document.getElementById('calOverlay')) return;
+            document.getElementById('calOverlay').classList.remove('open');
+            selectedDate = null;
+            updateAll();
+        }
+        function changeMonthCal(d) { calMonth += d; if(calMonth>11){calMonth=0;calYear++;} if(calMonth<0){calMonth=11;calYear--;} renderCalPopup(); }
+        function goTodayCal() { calYear=today.getFullYear(); calMonth=today.getMonth(); renderCalPopup(); }
+
+        function renderCalPopup() {
+            const months = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+            document.getElementById('calMonthLabel').textContent = `${calYear}년 ${months[calMonth]}`;
+
+            const grid = document.getElementById('calGrid');
+            const days = ['일','월','화','수','목','금','토'];
+            let html = days.map(d => `<div class="cal-day-label">${d}</div>`).join('');
+
+            const totalDays = new Date(calYear, calMonth + 1, 0).getDate();
+            const firstDay = new Date(calYear, calMonth, 1).getDay();
+            const prevDays = new Date(calYear, calMonth, 0).getDate();
+            const todayStr = toDateStr(today.getFullYear(), today.getMonth(), today.getDate());
+
+            for (let i = 0; i < firstDay; i++) {
+                const d = prevDays - firstDay + i + 1;
+                const m = calMonth === 0 ? 11 : calMonth - 1;
+                const y = calMonth === 0 ? calYear - 1 : calYear;
+                html += renderCell(d, toDateStr(y, m, d), true);
+            }
+            for (let d = 1; d <= totalDays; d++) {
+                const ds = toDateStr(calYear, calMonth, d);
+                html += renderCell(d, ds, false, ds === todayStr);
+            }
+            const totalCells = firstDay + totalDays;
+            const rem = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+            for (let i = 1; i <= rem; i++) {
+                const m = calMonth === 11 ? 0 : calMonth + 1;
+                const y = calMonth === 11 ? calYear + 1 : calYear;
+                html += renderCell(i, toDateStr(y, m, i), true);
+            }
+            grid.innerHTML = html;
+        }
+
+        function renderCell(day, ds, isOther, isToday) {
+            const exs = expenses.filter(e => e.date === ds);
+            const total = exs.reduce((s,e) => s + e.amount, 0);
+            const cls = ['cal-cell'];
+            if (isOther) cls.push('other');
+            if (isToday) cls.push('today');
+            if (ds === selectedDate) cls.push('selected');
+            let chips = '';
+            exs.slice(0,2).forEach(e => { chips += `<div class="day-chip">${e.name}</div>`; });
+            if (exs.length > 2) chips += `<div style="font-size:0.5rem;color:var(--text-sub);padding:1px 5px;">+${exs.length-2}건</div>`;
+            return `<div class="${cls.join(' ')}" onclick="openModal('${ds}')">
+                <div class="day-num">${day}</div>
+                ${total > 0 ? `<div class="day-total">${fmt(total)}</div>` : ''}
+                <div class="day-chips">${chips}</div>
+            </div>`;
+        }
+
+        function toDateStr(y,m,d) { return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+
+        // ── Expense Modal ──
+        function openModal(ds) {
+            selectedDate = ds;
+            document.getElementById('modalTitle').textContent = `${ds} 지출`;
+            document.getElementById('expenseName').value = '';
+            document.getElementById('expenseAmount').value = '';
+            document.getElementById('modalOverlay').classList.add('open');
+            renderDayDetail(ds);
+            setTimeout(() => document.getElementById('expenseName').focus(), 100);
+        }
+
+        function closeModal(e) {
+            if (e && e.target !== document.getElementById('modalOverlay')) return;
+            document.getElementById('modalOverlay').classList.remove('open');
+            selectedDate = null;
+            renderCalPopup();
+            updateAll();
+        }
+
+        function renderDayDetail(ds) {
+            const list = expenses.filter(e => e.date === ds);
+            const el = document.getElementById('dayDetail');
+            if (!list.length) { el.innerHTML = '<div class="empty-msg">등록된 지출이 없습니다.</div>'; return; }
+            el.innerHTML = list.map(e => `
+                <div class="day-detail-item">
+                    <span class="name">${e.name}</span>
+                    <div class="right">
+                        <span class="amount">${fmt(e.amount)}</span>
+                        <button class="del-btn" onclick="delExpense(${e.id},'${ds}')">✕</button>
+                    </div>
+                </div>`).join('');
+        }
+
+        function addExpense() {
+            if (!selectedDate) return;
+            const name = document.getElementById('expenseName').value.trim();
+            const amount = parseFloat(document.getElementById('expenseAmount').value);
+            if (!name) return alert('내용을 입력해주세요.');
+            if (!amount || amount <= 0) return alert('금액을 입력해주세요.');
+            expenses.push({ id: Date.now(), name, amount, date: selectedDate });
+            localStorage.setItem('ezb_expenses', JSON.stringify(expenses));
+            document.getElementById('expenseName').value = '';
+            document.getElementById('expenseAmount').value = '';
+            renderDayDetail(selectedDate);
+            renderCalPopup();
+            updateAll();
+        }
+
+        function delExpense(id, ds) {
+            expenses = expenses.filter(e => e.id !== id);
+            localStorage.setItem('ezb_expenses', JSON.stringify(expenses));
+            if (ds) renderDayDetail(ds);
+            renderCalPopup();
+            updateAll();
+        }
+
+        // ── Update ──
+        function updateAll() {
+            const filtered = expenses.filter(e => {
+                if (!startDate || !endDate) return true;
+                return e.date >= startDate && e.date <= endDate;
+            });
+            const totalSpent = filtered.reduce((s,e) => s + e.amount, 0);
+            const remaining = budget - totalSpent;
+            const pct = budget > 0 ? Math.min((totalSpent / budget) * 100, 100) : 0;
+
+            document.getElementById('heroBudget').textContent = fmt(budget);
+            document.getElementById('heroSpent').textContent = fmt(totalSpent);
+
+            const heroRem = document.getElementById('heroRemaining');
+            heroRem.textContent = fmt(Math.abs(remaining));
+
+            const heroPct = document.getElementById('heroPct');
+            if (budget === 0) {
+                heroPct.textContent = '예산을 설정하세요';
+                heroPct.style.color = 'var(--text-sub)';
+                heroPct.className = 'ring-pct';
+            } else {
+                const remainPct = Math.max(0, (1 - pct / 100) * 100);
+                heroPct.textContent = remainPct.toFixed(0) + '% 남음';
+                heroPct.className = 'ring-pct' + (remaining < 0 ? ' over' : '');
+            }
+
+            const circumference = 628.32;
+            const offset = circumference - (pct / 100) * circumference;
+            const ring = document.getElementById('ringFg');
+            ring.style.strokeDashoffset = offset;
+        }
+
+        updateAll();
+        renderCalPopup();
+    </script>
+</body>
+</html>
